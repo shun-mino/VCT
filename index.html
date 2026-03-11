@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>電線サイズ選定</title>
+  <title>キャブタイヤケーブル選定</title>
   <style>
     body {
       font-family: sans-serif;
@@ -75,10 +75,10 @@
   </style>
 </head>
 <body>
-  <h1>電線サイズ選定ツール</h1>
+  <h1>キャブタイヤケーブル選定選定ツール</h1>
 
   <div class="form-group">
-    <label for="phase">相の種類</label>
+    <label for="phase">単相or三相</label>
     <select id="phase">
       <option value="single">単相</option>
       <option value="three">三相</option>
@@ -138,7 +138,7 @@
         return;
       }
 
-      // 修正版: R = √((60 - t) / 30)
+      // R = √((60 - t) / 30)
       const R = Math.sqrt((60 - t) / 30);
 
       if (!Number.isFinite(R) || R <= 0) {
@@ -155,8 +155,8 @@
       if (!candidate) {
         output.innerHTML = `
           <div class="error">
-            条件を満たす電線が表内にありません。<br>
-            補正後電流 I/R = ${correctedCurrent.toFixed(2)} A
+            条件を満たすケーブルがありません。<br>
+            補正後許容電流 I/R = ${correctedCurrent.toFixed(2)} A
           </div>
         `;
         return;
@@ -166,7 +166,7 @@
         <div class="result">
           <p><strong>計算結果</strong></p>
           <p>減少係数 R = ${R.toFixed(4)}</p>
-          <p>補正後電流 I / R = ${correctedCurrent.toFixed(2)} A</p>
+          <p>補正後許容電流 I / R = ${correctedCurrent.toFixed(2)} A</p>
 
           <table>
             <thead>
