@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>電線サイズ選定</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 0 16px;
+      line-height: 1.6;
+    }
+
+    h1 {
+      margin-bottom: 24px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    input, select, button {
+      width: 100%;
+      max-width: 320px;
+      padding: 10px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+
+    button {
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    .result, .error {
+      margin-top: 24px;
+      padding: 16px;
+      border-radius: 8px;
+    }
+
+    .result {
+      background: #f3f7ff;
+      border: 1px solid #b9d0ff;
+    }
+
+    .error {
+      background: #fff3f3;
+      border: 1px solid #ffbaba;
+      color: #b00020;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 12px;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+    }
+
+    th {
+      background: #f5f5f5;
+    }
+  </style>
+</head>
+<body>
+  <h1>電線サイズ選定ツール</h1>
+
+  <div class="form-group">
+    <label for="phase">相の種類</label>
+    <select id="phase">
+      <option value="single">単相</option>
+      <option value="three">三相</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="temp">外気温 t (℃)</label>
+    <input type="number" id="temp" placeholder="例: 30" />
+  </div>
+
+  <div class="form-group">
+    <label for="current">必要電流 I (A)</label>
+    <input type="number" id="current" placeholder="例: 20" />
+  </div>
+
+  <button onclick="calculate()">計算する</button>
+
+  <div id="output"></div>
+
+  <script>
+    const tables = {
+      single: [
+        { size: "3×2",   outerDiameter: 10.9, allowableCurrent: 19 },
+        { size: "3×3.5", outerDiameter: 12.6, allowableCurrent: 27 },
+        { size: "3×5.5", outerDiameter: 15.0, allowableCurrent: 35 },
+        { size: "3×8",   outerDiameter: 17.5, allowableCurrent: 43 }
+      ],
+      three: [
+        { size: "4×2",   outerDiameter: 11.8, allowableCurrent: 17 },
+        { size: "4×3.5", outerDiameter: 13.9, allowableCurrent: 25 },
+        { size: "4×5.5", outerDiameter: 16.5, allowableCurrent: 32 },
+        { size: "4×8",   outerDiameter: 19.3, allowableCurrent: 39 }
+      ]
+    };
+
+    function calculate() {
+      const phase = document.getElementById("phase").value;
+      const t = parseFloat(document.getElementById("temp").value);
+      const I = parseFloat(document.getElementById("current").value);
+      const output = document.getElementById("output");
+
+      output.innerHTML = "";
+
+      if (Number.isNaN(t) || Number.isNaN(I)) {
+        output.innerHTML = `<div class="error">外気温と必要電流を正しく入力してください。</div>`;
+        return;
+      }
+
+      if (t > 60) {
+        output.innerHTML = `<div class="error">この式では外気温 t は 60 以下で入力してください。</div>`;
+        return;
+      }
+
+      if (I <= 0) {
+        output.innerHTML = `<div class="error">必要電流 I は 0 より大きい値を入力してください。</div>`;
+        return;
+      }
+
+      // 修正版: R = √((60 - t) / 30)
+      const R = Math.sqrt((60 - t) / 30);
+
+      if (!Number.isFinite(R) || R <= 0) {
+        output.innerHTML = `<div class="error">減少係数 R を計算できません。入力値を確認してください。</div>`;
+        return;
+      }
+
+      const correctedCurrent = I / R;
+      const table = tables[phase];
+
+      // 「I/Rより許容電流が大きい中で最小」を選択
+      const candidate = table.find(row => row.allowableCurrent > correctedCurrent);
+
+      if (!candidate) {
+        output.innerHTML = `
+          <div class="error">
+            条件を満たす電線が表内にありません。<br>
+            補正後電流 I/R = ${correctedCurrent.toFixed(2)} A
+          </div>
+        `;
+        return;
+      }
+
+      output.innerHTML = `
+        <div class="result">
+          <p><strong>計算結果</strong></p>
+          <p>減少係数 R = ${R.toFixed(4)}</p>
+          <p>補正後電流 I / R = ${correctedCurrent.toFixed(2)} A</p>
+
+          <table>
+            <thead>
+              <tr>
+                <th>サイズ(mm²)</th>
+                <th>仕上げ外径(mm)</th>
+                <th>許容電流(A)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>${candidate.size}</td>
+                <td>${candidate.outerDiameter}</td>
+                <td>${candidate.allowableCurrent}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+  </script>
+</body>
+</html>
