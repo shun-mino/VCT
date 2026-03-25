@@ -77,6 +77,15 @@
 <body>
   <h1>キャブタイヤケーブル選定ツール</h1>
 
+  <!-- 保護管の有無（追加） -->
+  <div class="form-group">
+    <label for="protect">保護管の有無</label>
+    <select id="protect">
+      <option value="none">なし</option>
+      <option value="yes">あり</option>
+    </select>
+  </div>
+
   <div class="form-group">
     <label for="phase">3心or4心</label>
     <select id="phase">
@@ -123,6 +132,7 @@
 
     function calculate() {
       const phase = document.getElementById("phase").value;
+      const protect = document.getElementById("protect").value; // ←追加
       const t = parseFloat(document.getElementById("temp").value);
       const I = parseFloat(document.getElementById("current").value);
       const output = document.getElementById("output");
@@ -153,9 +163,17 @@
       }
 
       const correctedCurrent = I / R;
-      const table = tables[phase];
 
-      // 「I/Rより許容電流が大きい中で最小」を選択
+      let table = tables[phase];
+
+      // 保護管あり → 許容電流0.7倍
+      if (protect === "yes") {
+        table = table.map(row => ({
+          ...row,
+          allowableCurrent: row.allowableCurrent * 0.7
+        }));
+      }
+
       const candidate = table.find(row => row.allowableCurrent > correctedCurrent);
 
       if (!candidate) {
@@ -186,7 +204,7 @@
               <tr>
                 <td>${candidate.size}</td>
                 <td>${candidate.outerDiameter}</td>
-                <td>${candidate.allowableCurrent}</td>
+                <td>${candidate.allowableCurrent.toFixed(1)}</td>
               </tr>
             </tbody>
           </table>
